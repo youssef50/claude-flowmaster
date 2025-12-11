@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* Rich Text Editor Styles */
+[contenteditable] {
+  outline: none;
+}
+
+[contenteditable] ul,
+[contenteditable] ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+[contenteditable] ul {
+  list-style-type: disc;
+}
+
+[contenteditable] ol {
+  list-style-type: decimal;
+}
+
+[contenteditable] li {
+  margin: 0.5em 0;
+}
+
+[contenteditable] pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+[contenteditable] code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+[contenteditable] pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+[contenteditable] img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5em;
+  margin: 1em 0;
+}
+
+[contenteditable] p {
+  margin: 0.5em 0;
+}
+
+[contenteditable] h1,
+[contenteditable] h2,
+[contenteditable] h3 {
+  margin: 1em 0 0.5em 0;
+  font-weight: bold;
+}
+
+[contenteditable] h1 {
+  font-size: 2em;
+}
+
+[contenteditable] h2 {
+  font-size: 1.5em;
+}
+
+[contenteditable] h3 {
+  font-size: 1.25em;
+}

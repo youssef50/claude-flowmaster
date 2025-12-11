@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: chainboard-postgres
+    environment:
+      POSTGRES_USER: chainboard
+      POSTGRES_PASSWORD: chainboard_dev
+      POSTGRES_DB: chainboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chainboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chainboard-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chainboard-backend
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://chainboard:chainboard_dev@postgres:5432/chainboard
+      NODE_ENV: development
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:5173
+    env_file:
+      - ./backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run start:dev
+    networks:
+      - chainboard-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chainboard-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+    networks:
+      - chainboard-network
+
+volumes:
+  postgres_data:
+
+networks:
+  chainboard-network:
+    driver: bridge

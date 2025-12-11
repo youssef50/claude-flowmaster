@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  engineers   Engineer[]
+
+  @@map("teams")
+}
+
+model Engineer {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  slackUserId String?  @map("slack_user_id")
+  teamId      String   @map("team_id")
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("engineers")
+}
+
+model SlackConfig {
+  id             String   @id @default(uuid())
+  workspace      String
+  botToken       String   @map("bot_token")
+  defaultChannel String?  @map("default_channel")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("slack_configs")
+}
+
+model Workflow {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  nodes       Json          // Store React Flow nodes as JSON
+  edges       Json          // Store React Flow edges as JSON
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  runs        WorkflowRun[]
+
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id         String    @id @default(uuid())
+  workflowId String    @map("workflow_id")
+  workflow   Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status     String    // 'pending', 'running', 'success', 'failed'
+  startedAt  DateTime  @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  logs       Json?     // Execution logs for each node
+  error      String?   // Error message if failed
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("workflow_runs")
+}
+
+model Folder {
+  id        String    @id @default(uuid())
+  name      String
+  color     String?   @default("#6366f1") // Indigo default
+  icon      String?   @default("📁")
+  runbooks  Runbook[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("folders")
+}
+
+model Tag {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  color     String?       @default("#8b5cf6") // Purple default
+  runbooks  RunbookTag[]
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("tags")
+}
+
+model Runbook {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  content     Json         // Rich text content with formatting
+  folderId    String?      @map("folder_id")
+  folder      Folder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags        RunbookTag[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("runbooks")
+}
+
+model RunbookTag {
+  runbookId String   @map("runbook_id")
+  tagId     String   @map("tag_id")
+  runbook   Runbook  @relation(fields: [runbookId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([runbookId, tagId])
+  @@map("runbook_tags")
+}
