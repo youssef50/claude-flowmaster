@@ -12,7 +12,7 @@ export const ProjectBoard: React.FC = () => {
   const [newCardContent, setNewCardContent] = useState<Record<string, string>>({});
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>('');
-
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const { data: project } = useQuery({
     queryKey: ['project', id],
     queryFn: async () => {
@@ -120,7 +120,7 @@ export const ProjectBoard: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
               {project.description && (
-                <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+                <p className="text-xs text-gray-500 truncate">admin@youssef.in</p>
               )}
             </div>
           </div>
@@ -130,6 +130,17 @@ export const ProjectBoard: React.FC = () => {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="p-4 bg-white border-b border-gray-200 flex items-center">
+        <input
+          type="text"
+          placeholder="Search cards..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8d75e6]"
+        />
       </div>
 
       {/* Kanban Board */}
@@ -142,17 +153,14 @@ export const ProjectBoard: React.FC = () => {
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.id)}
             >
-              {/* Column Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">{column.title}</h3>
-                <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
-                  {column.cards?.length || 0}
-                </span>
-              </div>
-
-              {/* Cards */}
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{column.title}</h3>
+              </div>     {/* Cards */}
               <div className="space-y-2 mb-4">
-                {column.cards?.map((card: ProjectCard) => (
+                {column.cards?.filter((card: ProjectCard) => {
+                  if (!searchTerm) return true;
+                  return card.content.toLowerCase().includes(searchTerm.toLowerCase());
+                }).map((card: ProjectCard) => (
                   <div key={card.id}>
                     {editingCardId === card.id ? (
                       // Edit Mode

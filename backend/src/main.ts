@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { ProjectsService } from './modules/projects/projects.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,8 +31,19 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  const projectsService = app.get(ProjectsService);
+  const existing = await projectsService.findAll();
+  if (existing.length === 0) {
+    await projectsService.create({
+      name: 'Demo Project',
+      description: 'A sample project for demo purposes',
+      tenantId: 'demo-tenant',
+    });
+    console.log('✅ Seeded demo project');
+  }
 
+  // Start server
+  await app.listen(port);
   console.log(`Backend running on http://localhost:${port}`);
   console.log(`API available at http://localhost:${port}/api`);
 }

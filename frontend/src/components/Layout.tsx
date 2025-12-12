@@ -27,10 +27,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Logo */}
         <div className="p-6">
           <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl font-bold">C</span>
+            <div className="w-10 h-10 bg-[#8d75e6] rounded-lg flex items-center justify-center shadow-lg">
+              <svg
+                className="w-7 h-7 text-white"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900">Chainboard</span>
+            <span className="text-4xl font-bold bg-gradient-to-r from-[#8d75e6] to-purple-600 bg-clip-text text-transparent">Kirro</span>
           </Link>
         </div>
 
@@ -40,11 +50,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link
               key={item.name}
               to={item.href}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isActive(item.href)
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive(item.href)
                   ? 'bg-indigo-50 text-indigo-700'
                   : 'text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <span className="mr-3 text-lg">{item.icon}</span>
               {item.name}
@@ -60,7 +69,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">Workspace Admin</p>
-              <p className="text-xs text-gray-500 truncate">admin@company.com</p>
+              <p className="text-xs text-gray-500 truncate">admin@youssef.in</p>
             </div>
           </div>
         </div>

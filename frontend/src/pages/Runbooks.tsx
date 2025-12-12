@@ -133,7 +133,7 @@ export const Runbooks: React.FC = () => {
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">Workspace Admin</p>
-              <p className="text-xs text-gray-500">admin@company.com</p>
+              <p className="text-xs text-gray-500">admin@youssef.in</p>
             </div>
           </div>
         </div>
