@@ -91,3 +91,49 @@ export interface Runbook {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Tenant {
+  id: string;
+  name: string;
+  projects?: Project[];
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    projects: number;
+  };
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  tenantId: string;
+  tenant?: Tenant;
+  columns?: ProjectColumn[];
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    columns: number;
+  };
+}
+
+export interface ProjectColumn {
+  id: string;
+  title: string;
+  order: number;
+  projectId: string;
+  project?: Project;
+  cards?: ProjectCard[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectCard {
+  id: string;
+  content: string;
+  order: number;
+  columnId: string;
+  column?: ProjectColumn;
+  createdAt: string;
+  updatedAt: string;
+}

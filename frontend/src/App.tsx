@@ -10,6 +10,8 @@ import { Engineers } from './pages/Engineers';
 import { Settings } from './pages/Settings';
 import { Runbooks } from './pages/Runbooks';
 import { RunbookEditor } from './pages/RunbookEditor';
+import { Projects } from './pages/Projects';
+import { ProjectBoard } from './pages/ProjectBoard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +37,8 @@ function App() {
           <Route path="/runbooks" element={<Runbooks />} />
           <Route path="/runbooks/new" element={<RunbookEditor />} />
           <Route path="/runbooks/:id" element={<RunbookEditor />} />
+          <Route path="/projects" element={<Layout><Projects /></Layout>} />
+          <Route path="/projects/:id" element={<ProjectBoard />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

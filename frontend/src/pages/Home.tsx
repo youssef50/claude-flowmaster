@@ -10,6 +10,12 @@ interface Category {
 
 const categories: Category[] = [
   {
+    id: 'projects',
+    icon: '📋',
+    label: 'Project Board',
+    route: '/projects',
+  },
+  {
     id: 'workflows',
     icon: '🔄',
     label: 'Workflow automation',

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Team, Engineer, SlackConfig, Workflow, Runbook, Folder, Tag } from '../types';
+import type { Team, Engineer, SlackConfig, Workflow, Runbook, Folder, Tag, Tenant, Project, ProjectCard } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -69,6 +69,40 @@ export const tagsApi = {
   getAll: () => api.get<Tag[]>('/tags'),
   create: (data: Partial<Tag>) => api.post<Tag>('/tags', data),
   delete: (id: string) => api.delete(`/tags/${id}`),
+};
+
+// Tenants
+export const tenantsApi = {
+  getAll: () => api.get<Tenant[]>('/tenants'),
+  getOne: (id: string) => api.get<Tenant>(`/tenants/${id}`),
+  create: (data: Partial<Tenant>) => api.post<Tenant>('/tenants', data),
+  update: (id: string, data: Partial<Tenant>) => api.patch<Tenant>(`/tenants/${id}`, data),
+  delete: (id: string) => api.delete(`/tenants/${id}`),
+};
+
+// Projects
+export const projectsApi = {
+  getAll: (tenantId?: string) => api.get<Project[]>('/projects', { params: { tenantId } }),
+  getOne: (id: string) => api.get<Project>(`/projects/${id}`),
+  create: (data: Partial<Project>) => api.post<Project>('/projects', data),
+  update: (id: string, data: Partial<Project>) => api.patch<Project>(`/projects/${id}`, data),
+  delete: (id: string) => api.delete(`/projects/${id}`),
+
+  // Columns
+  createColumn: (projectId: string, data: { title: string; order?: number }) =>
+    api.post(`/projects/${projectId}/columns`, data),
+  updateColumn: (columnId: string, data: { title: string }) =>
+    api.patch(`/projects/columns/${columnId}`, data),
+  deleteColumn: (columnId: string) => api.delete(`/projects/columns/${columnId}`),
+
+  // Cards
+  createCard: (data: { content: string; order?: number; columnId: string }) =>
+    api.post<ProjectCard>('/projects/cards', data),
+  updateCard: (cardId: string, data: { content?: string; order?: number; columnId?: string }) =>
+    api.patch<ProjectCard>(`/projects/cards/${cardId}`, data),
+  deleteCard: (cardId: string) => api.delete(`/projects/cards/${cardId}`),
+  reorderCards: (cards: Array<{ id: string; order: number; columnId: string }>) =>
+    api.post('/projects/cards/reorder', { cards }),
 };
 
 export default api;
