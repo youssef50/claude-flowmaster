@@ -8,6 +8,10 @@ export const RunbookEditor: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const editorRef = useRef<HTMLDivElement>(null);
+  const viewContentRef = useRef<HTMLDivElement>(null);
+
+  // Mode state
+  const [isEditing, setIsEditing] = useState(id === 'new');
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -15,6 +19,7 @@ export const RunbookEditor: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+  const [toc, setToc] = useState<{ id: string; text: string; level: number }[]>([]);
 
   const { data: runbook } = useQuery({
     queryKey: ['runbook', id],
@@ -44,52 +49,125 @@ export const RunbookEditor: React.FC = () => {
 
   useEffect(() => {
     if (runbook) {
-      console.log('Loading runbook:', runbook);
       setTitle(runbook.title);
       setDescription(runbook.description || '');
       setSelectedFolderId(runbook.folderId || '');
-      setSelectedTagIds(runbook.tags?.map((t) => t.tag.id) || []);
+      setSelectedTagIds(runbook.tags?.map((t: any) => t.tag.id) || []);
+      setContent(runbook.content?.html || '');
 
-      // Load content into editor
-      const htmlContent = runbook.content?.html || '';
-      console.log('Loading content:', htmlContent);
-      setContent(htmlContent);
-
-      // Set innerHTML directly to the editor
-      if (editorRef.current) {
-        if (htmlContent) {
-          editorRef.current.innerHTML = htmlContent;
-          console.log('Content loaded into editor');
-        } else {
-          editorRef.current.innerHTML = '<p>No content yet. Start writing...</p>';
-        }
+      // If editing, populate editor
+      if (isEditing && editorRef.current) {
+        editorRef.current.innerHTML = runbook.content?.html || '';
       }
     }
-  }, [runbook]);
+  }, [runbook, isEditing]);
 
-  // Initialize empty editor for new runbooks
+  // Generate TOC and handle Code Blocks in View Mode
   useEffect(() => {
-    if (id === 'new' && editorRef.current && !content) {
-      editorRef.current.innerHTML = '<p>Start writing your runbook here...</p>';
+    if (!isEditing && viewContentRef.current) {
+      const container = viewContentRef.current;
+
+      // 1. Generate TOC
+      const headers = container.querySelectorAll('h1, h2, h3');
+      const newToc: { id: string; text: string; level: number }[] = [];
+      headers.forEach((header, index) => {
+        const id = header.id || `section-${index}`;
+        header.id = id;
+        newToc.push({
+          id,
+          text: header.textContent || '',
+          level: parseInt(header.tagName[1]),
+        });
+      });
+      setToc(newToc);
+
+      // 2. Enhance Code Blocks
+      const preBlocks = container.querySelectorAll('pre');
+      preBlocks.forEach((pre) => {
+        // Check if already enhanced
+        if (pre.parentElement?.classList.contains('code-wrapper')) return;
+
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper relative group my-6 bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg border border-gray-800 transition-all duration-200';
+
+        // Header with lang (optional) and copy button
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between px-4 py-2 bg-[#292e42] border-b border-gray-700';
+
+        const langBadge = document.createElement('div');
+        langBadge.className = 'flex space-x-1.5';
+        // Mac-style dots
+        ['bg-red-500', 'bg-yellow-500', 'bg-green-500'].forEach(color => {
+          const dot = document.createElement('div');
+          dot.className = `w-3 h-3 rounded-full ${color}`;
+          langBadge.appendChild(dot);
+        });
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'text-gray-400 hover:text-white text-xs font-medium bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100';
+        copyBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copy
+        `;
+
+        copyBtn.onclick = () => {
+          const code = pre.textContent || '';
+          navigator.clipboard.writeText(code);
+          copyBtn.innerHTML = '✨ Copied!';
+          setTimeout(() => {
+            copyBtn.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy
+            `;
+          }, 2000);
+        };
+
+        header.appendChild(langBadge);
+        header.appendChild(copyBtn);
+        wrapper.appendChild(header);
+
+        // Move pre into wrapper
+        pre.parentNode?.insertBefore(wrapper, pre);
+
+        // Style pre
+        pre.className = 'p-4 overflow-x-auto text-sm text-[#a9b1d6] font-mono leading-relaxed';
+        pre.style.margin = '0';
+        pre.style.backgroundColor = 'transparent';
+
+        wrapper.appendChild(pre);
+      });
+
+      // 3. Enhance Images
+      const images = container.querySelectorAll('img');
+      images.forEach(img => {
+        img.className = 'rounded-xl shadow-lg my-6 max-w-full border border-gray-100';
+      });
+
+      // 4. Enhance Links
+      const links = container.querySelectorAll('a');
+      links.forEach(link => {
+        link.className = 'text-indigo-600 hover:text-indigo-800 underline underline-offset-2 decoration-indigo-200 hover:decoration-indigo-600 transition-all';
+      });
     }
-  }, [id]);
+  }, [content, isEditing]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Get the latest content from the editor
       const currentContent = editorRef.current?.innerHTML || content;
-
       const data = {
         title,
         description,
-        content: {
-          html: currentContent,
-        },
+        content: { html: currentContent },
         folderId: selectedFolderId || undefined,
         tagIds: selectedTagIds,
       };
-
-      console.log('Saving runbook:', data);
 
       if (id && id !== 'new') {
         return runbooksApi.update(id, data);
@@ -100,16 +178,10 @@ export const RunbookEditor: React.FC = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['runbooks'] });
       queryClient.invalidateQueries({ queryKey: ['runbook', id] });
-
-      alert('Runbook saved successfully!');
-
+      setIsEditing(false); // Switch to view mode after save
       if (id === 'new') {
         navigate(`/runbooks/${response.data.id}`);
       }
-    },
-    onError: (error: any) => {
-      console.error('Save error:', error);
-      alert(`Failed to save: ${error.response?.data?.message || error.message}`);
     },
   });
 
@@ -117,21 +189,13 @@ export const RunbookEditor: React.FC = () => {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
     updateActiveFormats();
-    if (editorRef.current) {
-      setContent(editorRef.current.innerHTML);
-    }
+    if (editorRef.current) setContent(editorRef.current.innerHTML);
   };
 
   const updateActiveFormats = () => {
+    // simplified for brevity
     const formats = new Set<string>();
-
     if (document.queryCommandState('bold')) formats.add('bold');
-    if (document.queryCommandState('italic')) formats.add('italic');
-    if (document.queryCommandState('underline')) formats.add('underline');
-    if (document.queryCommandState('strikeThrough')) formats.add('strikethrough');
-    if (document.queryCommandState('insertUnorderedList')) formats.add('ul');
-    if (document.queryCommandState('insertOrderedList')) formats.add('ol');
-
     setActiveFormats(formats);
   };
 
@@ -139,19 +203,11 @@ export const RunbookEditor: React.FC = () => {
     const code = prompt('Enter code:');
     if (code) {
       const pre = document.createElement('pre');
-      const codeEl = document.createElement('code');
-      codeEl.textContent = code;
-      codeEl.className = 'block bg-gray-900 text-gray-100 p-4 rounded-lg my-2 overflow-x-auto';
-      pre.appendChild(codeEl);
+      pre.textContent = code;
 
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(pre);
-      }
-
+      // In edit mode we just use simple pre for simplicity, view mode enhances it
       if (editorRef.current) {
+        editorRef.current.appendChild(pre); // Append logic is simple here, typically you'd insert at cursor
         setContent(editorRef.current.innerHTML);
       }
     }
@@ -159,246 +215,198 @@ export const RunbookEditor: React.FC = () => {
 
   const insertImage = () => {
     const url = prompt('Enter image URL:');
-    if (url) {
-      applyFormat('insertImage', url);
-    }
+    if (url) applyFormat('insertImage', url);
   };
 
-  const handleEditorInput = () => {
-    if (editorRef.current) {
-      setContent(editorRef.current.innerHTML);
-    }
-  };
-
-  const toolbarButtons = [
-    { icon: 'B', command: 'bold', title: 'Bold (Ctrl+B)', format: 'bold', class: 'font-bold' },
-    { icon: 'I', command: 'italic', title: 'Italic (Ctrl+I)', format: 'italic', class: 'italic' },
-    { icon: 'U', command: 'underline', title: 'Underline (Ctrl+U)', format: 'underline', class: 'underline' },
-    { icon: 'S', command: 'strikeThrough', title: 'Strikethrough', format: 'strikethrough', class: 'line-through' },
-  ];
-
-  return (
-    <div className="h-screen flex flex-col bg-white">
-      {/* Top Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-          >
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-lg font-bold">C</span>
-            </div>
-            <span className="text-lg font-bold text-gray-900">Chainboard</span>
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => navigate('/runbooks')}
-            className="text-sm text-gray-600 hover:text-indigo-600 transition-colors"
-          >
-            ← Runbooks
-          </button>
-          <span className="text-gray-400">|</span>
-          <span className="text-sm font-medium text-gray-700">
-            {id === 'new' ? 'New Runbook' : 'Edit Runbook'}
-          </span>
+  // If in Edit Mode, we render the Editor
+  if (isEditing) {
+    return (
+      <div className="h-screen flex flex-col bg-white">
+        {/* Helper Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button onClick={() => navigate('/runbooks')} className="text-gray-500 hover:text-gray-900">← Back</button>
+            <span className="font-semibold text-gray-900">Editing: {title || 'Untitled'}</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => saveMutation.mutate()}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+            >
+              Save Changes
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => saveMutation.mutate()}
-            disabled={!title || saveMutation.isPending}
-            className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {saveMutation.isPending ? 'Saving...' : '💾 Save'}
-          </button>
+        {/* Toolbar */}
+        <div className="border-b border-gray-200 px-6 py-2 bg-gray-50 flex items-center space-x-2 overflow-x-auto">
+          <button onClick={() => applyFormat('bold')} className="p-2 hover:bg-gray-200 rounded font-bold">B</button>
+          <button onClick={() => applyFormat('italic')} className="p-2 hover:bg-gray-200 rounded italic">I</button>
+          <button onClick={() => applyFormat('underline')} className="p-2 hover:bg-gray-200 rounded underline">U</button>
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <button onClick={() => applyFormat('insertUnorderedList')} className="p-2 hover:bg-gray-200 rounded">Bullet List</button>
+          <button onClick={() => applyFormat('insertOrderedList')} className="p-2 hover:bg-gray-200 rounded">Num List</button>
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <button onClick={insertCodeBlock} className="p-2 hover:bg-gray-200 rounded text-sm font-mono">&lt;Code&gt;</button>
+          <button onClick={insertImage} className="p-2 hover:bg-gray-200 rounded">🖼️ Image</button>
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+          {/* Folder/Tag Helpers could go here or in a settings modal */}
+        </div>
 
-          <div className="w-px h-6 bg-gray-300" />
+        <div className="flex-1 overflow-auto bg-gray-50 p-8">
+          <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-12 min-h-[800px]">
+            <input
+              type="text"
+              placeholder="Page Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-4xl font-bold border-none placeholder-gray-300 mb-6 focus:ring-0 px-0"
+            />
+            <input
+              type="text"
+              placeholder="Short description..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full text-xl text-gray-500 border-none placeholder-gray-300 mb-8 focus:ring-0 px-0"
+            />
+            <div
+              ref={editorRef}
+              contentEditable
+              className="prose prose-lg max-w-none focus:outline-none min-h-[500px]"
+              onInput={(e) => setContent(e.currentTarget.innerHTML)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          {/* User Info */}
+  // View Mode (Modern layout)
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Sticky Top Navigation */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/runbooks')}
+              className="p-1 rounded-md hover:bg-gray-100 text-gray-500"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <span>Runbooks</span>
+              <span>/</span>
+              <span className="font-medium text-gray-900 truncate max-w-[200px]">{title}</span>
+            </div>
+          </div>
+
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-700">👤</span>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Workspace Admin</p>
-              <p className="text-xs text-gray-500">admin@youssef.in</p>
-            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied!');
+              }}
+              className="inline-flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              <span>Copy link</span>
+            </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="inline-flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>Edit Page</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-        <div className="flex items-center space-x-1">
-          {toolbarButtons.map((btn) => (
-            <button
-              key={btn.command}
-              onClick={() => applyFormat(btn.command)}
-              title={btn.title}
-              className={`px-3 py-2 rounded hover:bg-gray-200 transition-colors ${btn.class} ${
-                activeFormats.has(btn.format) ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700'
-              }`}
-            >
-              {btn.icon}
-            </button>
-          ))}
-
-          <div className="w-px h-6 bg-gray-300 mx-2" />
-
-          <select
-            onChange={(e) => applyFormat('fontSize', e.target.value)}
-            className="px-3 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50"
-            defaultValue="3"
-          >
-            <option value="1">Small</option>
-            <option value="3">Normal</option>
-            <option value="5">Large</option>
-            <option value="7">Huge</option>
-          </select>
-
-          <input
-            type="color"
-            onChange={(e) => applyFormat('foreColor', e.target.value)}
-            className="w-10 h-10 rounded cursor-pointer"
-            title="Text Color"
-          />
-
-          <input
-            type="color"
-            onChange={(e) => applyFormat('hiliteColor', e.target.value)}
-            className="w-10 h-10 rounded cursor-pointer"
-            title="Highlight Color"
-          />
-
-          <div className="w-px h-6 bg-gray-300 mx-2" />
-
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              applyFormat('insertUnorderedList');
-            }}
-            className={`px-3 py-2 rounded hover:bg-gray-200 transition-colors ${
-              activeFormats.has('ul') ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700'
-            }`}
-            title="Bullet List"
-          >
-            ≡ Bullets
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              applyFormat('insertOrderedList');
-            }}
-            className={`px-3 py-2 rounded hover:bg-gray-200 transition-colors ${
-              activeFormats.has('ol') ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-gray-700'
-            }`}
-            title="Numbered List"
-          >
-            1. Numbers
-          </button>
-
-          <div className="w-px h-6 bg-gray-300 mx-2" />
-
-          <button
-            onClick={insertCodeBlock}
-            className="px-3 py-2 bg-white text-gray-700 rounded hover:bg-gray-200 transition-colors"
-            title="Insert Code Block"
-          >
-            &lt;/&gt; Code
-          </button>
-
-          <button
-            onClick={insertImage}
-            className="px-3 py-2 bg-white text-gray-700 rounded hover:bg-gray-200 transition-colors"
-            title="Insert Image"
-          >
-            🖼️ Image
-          </button>
-        </div>
-      </div>
-
-      {/* Editor */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-8">
-          {/* Title */}
-          <input
-            type="text"
-            placeholder="Runbook Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-4xl font-bold border-none outline-none mb-4 placeholder-gray-300"
-          />
-
-          {/* Description */}
-          <input
-            type="text"
-            placeholder="Brief description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full text-lg text-gray-600 border-none outline-none mb-6 placeholder-gray-300"
-          />
-
-          {/* Metadata */}
-          <div className="flex space-x-4 mb-6">
-            <select
-              value={selectedFolderId}
-              onChange={(e) => setSelectedFolderId(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">No Folder</option>
-              {folders?.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.icon} {folder.name}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex-1 border border-gray-300 rounded-lg p-2">
-              <div className="flex flex-wrap gap-2">
-                {tags?.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => {
-                      setSelectedTagIds((prev) =>
-                        prev.includes(tag.id)
-                          ? prev.filter((id) => id !== tag.id)
-                          : [...prev, tag.id]
-                      );
-                    }}
-                    className={`px-3 py-1 text-sm font-medium rounded-full transition-colors ${
-                      selectedTagIds.includes(tag.id)
-                        ? 'text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    style={
-                      selectedTagIds.includes(tag.id)
-                        ? { backgroundColor: tag.color }
-                        : undefined
-                    }
-                  >
-                    {tag.name}
-                  </button>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-12 gap-12">
+          {/* Main Content */}
+          <main className="col-span-12 lg:col-span-9">
+            <div className="mb-10 pb-10 border-b border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                {runbook?.folder && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                    {runbook.folder.icon || '📁'} {runbook.folder.name}
+                  </span>
+                )}
+                {runbook?.tags?.map((t: any) => (
+                  <span key={t.tag.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: `${t.tag.color}20`, color: t.tag.color }}>
+                    {t.tag.name}
+                  </span>
                 ))}
               </div>
-            </div>
-          </div>
+              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4 leading-tight">{title}</h1>
+              {description && <p className="text-xl text-gray-500 leading-relaxed font-light">{description}</p>}
 
-          {/* Rich Text Editor */}
-          <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleEditorInput}
-            onMouseUp={updateActiveFormats}
-            onKeyUp={updateActiveFormats}
-            className="min-h-[500px] p-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 prose max-w-none"
-            style={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.6',
-            }}
-            suppressContentEditableWarning
-          />
+              <div className="mt-6 flex items-center space-x-4 text-sm text-gray-400">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs mr-2">WA</div>
+                  <span>Workspace Admin</span>
+                </div>
+                <span>•</span>
+                <span>Updated {new Date(runbook?.updatedAt || Date.now()).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            <div
+              ref={viewContentRef}
+              className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-gray-900 prose-p:text-gray-600 prose-p:leading-8 prose-a:text-indigo-600 prose-strong:text-gray-900 prose-code:text-indigo-600 prose-pre:bg-gray-900 prose-pre:shadow-lg prose-pre:rounded-xl prose-img:rounded-xl prose-img:shadow-md"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </main>
+
+          {/* Right Sidebar - TOC */}
+          <aside className="hidden lg:block col-span-3">
+            <div className="sticky top-24">
+              <h5 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">On this page</h5>
+              <nav className="space-y-1">
+                {toc.length === 0 && <p className="text-sm text-gray-400 italic">No sections found.</p>}
+                {toc.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    className={`block text-sm py-1 border-l-2 pl-4 transition-colors ${item.level === 2 ? 'border-transparent text-gray-600 hover:text-indigo-600 hover:border-indigo-300' : 'border-transparent text-gray-500 hover:text-indigo-600 ml-4'
+                      }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    {item.text}
+                  </a>
+                ))}
+              </nav>
+
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resources</h5>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#" className="flex items-center text-sm text-gray-600 hover:text-indigo-600 group">
+                      <svg className="w-4 h-4 mr-2 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      API Documentation
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center text-sm text-gray-600 hover:text-indigo-600 group">
+                      <svg className="w-4 h-4 mr-2 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                      Support
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

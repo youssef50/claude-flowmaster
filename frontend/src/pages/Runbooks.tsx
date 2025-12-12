@@ -95,10 +95,20 @@ export const Runbooks: React.FC = () => {
             onClick={() => navigate('/')}
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-lg font-bold">C</span>
+            <div className="w-8 h-8 bg-[#8d75e6] rounded-lg flex items-center justify-center shadow-lg">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-            <span className="text-lg font-bold text-gray-900">Chainboard</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-[#8d75e6] to-purple-600 bg-clip-text text-transparent">Kirro</span>
           </button>
           <span className="text-gray-400">|</span>
           <span className="text-sm font-medium text-gray-700">Runbooks</span>
@@ -143,306 +153,332 @@ export const Runbooks: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <div className="w-64 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-        <div className="p-4">
-          <button
-            onClick={() => navigate('/runbooks/new')}
-            className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            + New Runbook
-          </button>
-        </div>
+          <div className="p-4">
+            <button
+              onClick={() => navigate('/runbooks/new')}
+              className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              + New Runbook
+            </button>
+          </div>
 
-        {/* All Runbooks */}
-        <div className="px-4 mb-2">
-          <button
-            onClick={() => {
-              setSelectedFolder(undefined);
-              setSelectedTag(undefined);
-            }}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              !selectedFolder && !selectedTag
+          {/* All Runbooks */}
+          <div className="px-4 mb-2">
+            <button
+              onClick={() => {
+                setSelectedFolder(undefined);
+                setSelectedTag(undefined);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedFolder && !selectedTag
                 ? 'bg-indigo-50 text-indigo-700'
                 : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <span className="mr-2">📚</span>
-            All Runbooks
-          </button>
-        </div>
-
-        {/* Folders */}
-        <div className="px-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Folders
-            </h3>
-            <button
-              onClick={() => setIsCreatingFolder(true)}
-              className="text-gray-400 hover:text-indigo-600"
+                }`}
             >
-              +
+              <span className="mr-2">📚</span>
+              All Runbooks
             </button>
           </div>
 
-          {isCreatingFolder && (
-            <div className="mb-2 p-2 bg-gray-50 rounded-lg">
-              <input
-                type="text"
-                placeholder="Folder name"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded mb-2"
-                autoFocus
-              />
-              <input
-                type="color"
-                value={folderColor}
-                onChange={(e) => setFolderColor(e.target.value)}
-                className="w-full h-8 rounded mb-2"
-              />
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => createFolderMutation.mutate({ name: folderName, color: folderColor })}
-                  disabled={!folderName}
-                  className="flex-1 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:bg-gray-400"
-                >
-                  Create
-                </button>
-                <button
-                  onClick={() => {
-                    setIsCreatingFolder(false);
-                    setFolderName('');
-                  }}
-                  className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
+          {/* Folders */}
+          <div className="px-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Folders
+              </h3>
+              <button
+                onClick={() => setIsCreatingFolder(true)}
+                className="text-gray-400 hover:text-indigo-600"
+              >
+                +
+              </button>
             </div>
-          )}
 
-          <div className="space-y-1">
-            {folders?.map((folder) => (
-              <div
-                key={folder.id}
-                className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
-                  selectedFolder === folder.id
+            {isCreatingFolder && (
+              <div className="mb-2 p-2 bg-gray-50 rounded-lg">
+                <input
+                  type="text"
+                  placeholder="Folder name"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded mb-2"
+                  autoFocus
+                />
+                <input
+                  type="color"
+                  value={folderColor}
+                  onChange={(e) => setFolderColor(e.target.value)}
+                  className="w-full h-8 rounded mb-2"
+                />
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => createFolderMutation.mutate({ name: folderName, color: folderColor })}
+                    disabled={!folderName}
+                    className="flex-1 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:bg-gray-400"
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreatingFolder(false);
+                      setFolderName('');
+                    }}
+                    className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              {folders?.map((folder) => (
+                <div
+                  key={folder.id}
+                  className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${selectedFolder === folder.id
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  setSelectedFolder(folder.id);
-                  setSelectedTag(undefined);
-                }}
-              >
-                <span>
-                  <span style={{ color: folder.color }} className="mr-2">
-                    {folder.icon || '📁'}
+                    }`}
+                  onClick={() => {
+                    setSelectedFolder(folder.id);
+                    setSelectedTag(undefined);
+                  }}
+                >
+                  <span>
+                    <span style={{ color: folder.color }} className="mr-2">
+                      {folder.icon || '📁'}
+                    </span>
+                    {folder.name}
                   </span>
-                  {folder.name}
-                </span>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs text-gray-400">{folder._count?.runbooks || 0}</span>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xs text-gray-400">{folder._count?.runbooks || 0}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete folder "${folder.name}"?`)) {
+                          deleteFolderMutation.mutate(folder.id);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</h3>
+              <button
+                onClick={() => setIsCreatingTag(true)}
+                className="text-gray-400 hover:text-indigo-600"
+              >
+                +
+              </button>
+            </div>
+
+            {isCreatingTag && (
+              <div className="mb-2 p-2 bg-gray-50 rounded-lg">
+                <input
+                  type="text"
+                  placeholder="Tag name"
+                  value={tagName}
+                  onChange={(e) => setTagName(e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded mb-2"
+                  autoFocus
+                />
+                <input
+                  type="color"
+                  value={tagColor}
+                  onChange={(e) => setTagColor(e.target.value)}
+                  className="w-full h-8 rounded mb-2"
+                />
+                <div className="flex space-x-2">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Delete folder "${folder.name}"?`)) {
-                        deleteFolderMutation.mutate(folder.id);
-                      }
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800"
+                    onClick={() => createTagMutation.mutate({ name: tagName, color: tagColor })}
+                    disabled={!tagName}
+                    className="flex-1 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:bg-gray-400"
                   >
-                    ×
+                    Create
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreatingTag(false);
+                      setTagName('');
+                    }}
+                    className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
 
-        {/* Tags */}
-        <div className="px-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</h3>
-            <button
-              onClick={() => setIsCreatingTag(true)}
-              className="text-gray-400 hover:text-indigo-600"
-            >
-              +
-            </button>
-          </div>
-
-          {isCreatingTag && (
-            <div className="mb-2 p-2 bg-gray-50 rounded-lg">
-              <input
-                type="text"
-                placeholder="Tag name"
-                value={tagName}
-                onChange={(e) => setTagName(e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded mb-2"
-                autoFocus
-              />
-              <input
-                type="color"
-                value={tagColor}
-                onChange={(e) => setTagColor(e.target.value)}
-                className="w-full h-8 rounded mb-2"
-              />
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => createTagMutation.mutate({ name: tagName, color: tagColor })}
-                  disabled={!tagName}
-                  className="flex-1 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 disabled:bg-gray-400"
-                >
-                  Create
-                </button>
-                <button
-                  onClick={() => {
-                    setIsCreatingTag(false);
-                    setTagName('');
-                  }}
-                  className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1">
-            {tags?.map((tag) => (
-              <div
-                key={tag.id}
-                className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
-                  selectedTag === tag.id
+            <div className="space-y-1">
+              {tags?.map((tag) => (
+                <div
+                  key={tag.id}
+                  className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${selectedTag === tag.id
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  setSelectedTag(tag.id);
-                  setSelectedFolder(undefined);
-                }}
-              >
-                <span className="flex items-center">
-                  <span
-                    className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  {tag.name}
-                </span>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs text-gray-400">{tag._count?.runbooks || 0}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Delete tag "${tag.name}"?`)) {
-                        deleteTagMutation.mutate(tag.id);
-                      }
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800"
-                  >
-                    ×
-                  </button>
+                    }`}
+                  onClick={() => {
+                    setSelectedTag(tag.id);
+                    setSelectedFolder(undefined);
+                  }}
+                >
+                  <span className="flex items-center">
+                    <span
+                      className="w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    {tag.name}
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xs text-gray-400">{tag._count?.runbooks || 0}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete tag "${tag.name}"?`)) {
+                          deleteTagMutation.mutate(tag.id);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search runbooks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRunbooks?.map((runbook) => (
-              <div
-                key={runbook.id}
-                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/runbooks/${runbook.id}`)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{runbook.title}</h3>
-                    {runbook.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{runbook.description}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Delete runbook "${runbook.title}"?`)) {
-                        deleteRunbookMutation.mutate(runbook.id);
-                      }
-                    }}
-                    className="text-gray-400 hover:text-red-600"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {runbook.tags?.map(({ tag }) => (
-                    <span
-                      key={tag.id}
-                      className="px-2 py-1 text-xs font-medium rounded-full"
-                      style={{
-                        backgroundColor: `${tag.color}20`,
-                        color: tag.color,
-                      }}
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
-                  {runbook.folder && (
-                    <span className="flex items-center">
-                      <span style={{ color: runbook.folder.color }} className="mr-1">
-                        {runbook.folder.icon || '📁'}
-                      </span>
-                      {runbook.folder.name}
-                    </span>
-                  )}
-                  <span>{new Date(runbook.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredRunbooks?.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <span className="text-4xl mb-4 block">📖</span>
-              <p className="text-gray-500 mb-4">No runbooks found</p>
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-6 flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Search runbooks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {/* Toolbar for quick actions */}
               <button
-                onClick={() => navigate('/runbooks/new')}
-                className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => alert('Image upload not implemented yet')}
+                className="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
               >
-                Create Your First Runbook
+                📷 Image
+              </button>
+              <button
+                onClick={() => alert('Code snippet insertion not implemented yet')}
+                className="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+              >
+                Code
               </button>
             </div>
-          )}
-        </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRunbooks?.map((runbook) => (
+                <div
+                  key={runbook.id}
+                  className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/runbooks/${runbook.id}`)}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{runbook.title}</h3>
+                      {runbook.description && (
+                        <p className="text-sm text-gray-600 line-clamp-2">{runbook.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {/* Copy button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(`${runbook.title}\n\n${runbook.description || ''}`);
+                          alert('Runbook copied to clipboard');
+                        }}
+                        className="text-gray-400 hover:text-indigo-600"
+                        title="Copy runbook"
+                      >
+                        📋
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete runbook "${runbook.title}"?`)) {
+                            deleteRunbookMutation.mutate(runbook.id);
+                          }
+                        }}
+                        className="text-gray-400 hover:text-red-600"
+                        title="Delete runbook"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {runbook.tags?.map(({ tag }) => (
+                      <span
+                        key={tag.id}
+                        className="px-2 py-1 text-xs font-medium rounded-full"
+                        style={{
+                          backgroundColor: `${tag.color}20`,
+                          color: tag.color,
+                        }}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
+                    {runbook.folder && (
+                      <span className="flex items-center">
+                        <span style={{ color: runbook.folder.color }} className="mr-1">
+                          {runbook.folder.icon || '📁'}
+                        </span>
+                        {runbook.folder.name}
+                      </span>
+                    )}
+                    <span>{new Date(runbook.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredRunbooks?.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <span className="text-4xl mb-4 block">📖</span>
+                <p className="text-gray-500 mb-4">No runbooks found</p>
+                <button
+                  onClick={() => navigate('/runbooks/new')}
+                  className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Create Your First Runbook
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
