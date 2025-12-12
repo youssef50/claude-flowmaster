@@ -9,6 +9,7 @@ export const RunbookEditor: React.FC = () => {
   const queryClient = useQueryClient();
   const editorRef = useRef<HTMLDivElement>(null);
   const viewContentRef = useRef<HTMLDivElement>(null);
+  const selectionRange = useRef<Range | null>(null);
 
   // Mode state
   const [isEditing, setIsEditing] = useState(id === 'new');
@@ -84,28 +85,24 @@ export const RunbookEditor: React.FC = () => {
       // 2. Enhance Code Blocks
       const preBlocks = container.querySelectorAll('pre');
       preBlocks.forEach((pre) => {
-        // Check if already enhanced
         if (pre.parentElement?.classList.contains('code-wrapper')) return;
 
-        // Create wrapper
         const wrapper = document.createElement('div');
-        wrapper.className = 'code-wrapper relative group my-6 bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg border border-gray-800 transition-all duration-200';
+        wrapper.className = 'code-wrapper relative group my-6 bg-slate-50 rounded-xl overflow-hidden shadow-sm border border-[#976266] transition-all duration-200';
 
-        // Header with lang (optional) and copy button
         const header = document.createElement('div');
-        header.className = 'flex items-center justify-between px-4 py-2 bg-[#292e42] border-b border-gray-700';
+        header.className = 'flex items-center justify-between px-4 py-2 bg-[#aca0c9] border-b border-[#976266]';
 
         const langBadge = document.createElement('div');
         langBadge.className = 'flex space-x-1.5';
-        // Mac-style dots
-        ['bg-red-500', 'bg-yellow-500', 'bg-green-500'].forEach(color => {
+        ['bg-red-400', 'bg-yellow-400', 'bg-green-400'].forEach(color => {
           const dot = document.createElement('div');
           dot.className = `w-3 h-3 rounded-full ${color}`;
           langBadge.appendChild(dot);
         });
 
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'text-gray-400 hover:text-white text-xs font-medium bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100';
+        copyBtn.className = 'text-slate-500 hover:text-indigo-600 text-xs font-medium bg-white hover:bg-indigo-50 border border-[#976266] px-2 py-1 rounded transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100 shadow-sm';
         copyBtn.innerHTML = `
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -133,11 +130,9 @@ export const RunbookEditor: React.FC = () => {
         header.appendChild(copyBtn);
         wrapper.appendChild(header);
 
-        // Move pre into wrapper
         pre.parentNode?.insertBefore(wrapper, pre);
 
-        // Style pre
-        pre.className = 'p-4 overflow-x-auto text-sm text-[#a9b1d6] font-mono leading-relaxed';
+        pre.className = 'p-4 overflow-x-auto text-sm text-slate-700 font-mono leading-relaxed';
         pre.style.margin = '0';
         pre.style.backgroundColor = 'transparent';
 
@@ -178,22 +173,42 @@ export const RunbookEditor: React.FC = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['runbooks'] });
       queryClient.invalidateQueries({ queryKey: ['runbook', id] });
-      setIsEditing(false); // Switch to view mode after save
+      setIsEditing(false);
       if (id === 'new') {
         navigate(`/runbooks/${response.data.id}`);
       }
     },
   });
 
+  const saveRange = () => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (editorRef.current?.contains(range.commonAncestorContainer)) {
+        selectionRange.current = range.cloneRange();
+      }
+    }
+  };
+
   const applyFormat = (command: string, value?: string) => {
-    editorRef.current?.focus();
+    // Restore selection if we have one
+    if (selectionRange.current) {
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(selectionRange.current);
+      }
+    }
+
     document.execCommand(command, false, value);
+    editorRef.current?.focus();
+
+    saveRange();
     updateActiveFormats();
     if (editorRef.current) setContent(editorRef.current.innerHTML);
   };
 
   const updateActiveFormats = () => {
-    // simplified for brevity
     const formats = new Set<string>();
     if (document.queryCommandState('bold')) formats.add('bold');
     setActiveFormats(formats);
@@ -205,9 +220,9 @@ export const RunbookEditor: React.FC = () => {
       const pre = document.createElement('pre');
       pre.textContent = code;
 
-      // In edit mode we just use simple pre for simplicity, view mode enhances it
       if (editorRef.current) {
-        editorRef.current.appendChild(pre); // Append logic is simple here, typically you'd insert at cursor
+        // Simple append for now
+        editorRef.current.appendChild(pre);
         setContent(editorRef.current.innerHTML);
       }
     }
@@ -218,11 +233,9 @@ export const RunbookEditor: React.FC = () => {
     if (url) applyFormat('insertImage', url);
   };
 
-  // If in Edit Mode, we render the Editor
   if (isEditing) {
     return (
       <div className="h-screen flex flex-col bg-white">
-        {/* Helper Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button onClick={() => navigate('/runbooks')} className="text-gray-500 hover:text-gray-900">← Back</button>
@@ -244,19 +257,41 @@ export const RunbookEditor: React.FC = () => {
           </div>
         </div>
 
-        {/* Toolbar */}
         <div className="border-b border-gray-200 px-6 py-2 bg-gray-50 flex items-center space-x-2 overflow-x-auto">
           <button onClick={() => applyFormat('bold')} className="p-2 hover:bg-gray-200 rounded font-bold">B</button>
           <button onClick={() => applyFormat('italic')} className="p-2 hover:bg-gray-200 rounded italic">I</button>
           <button onClick={() => applyFormat('underline')} className="p-2 hover:bg-gray-200 rounded underline">U</button>
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          <select
+            onChange={(e) => applyFormat('fontSize', e.target.value)}
+            className="px-2 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer"
+            defaultValue="3"
+            title="Font Size"
+          >
+            <option value="1">Small</option>
+            <option value="3">Normal</option>
+            <option value="5">Large</option>
+            <option value="7">Huge</option>
+          </select>
+
+          <div className="flex items-center space-x-1 border border-gray-300 rounded px-2 py-1 bg-white relative hover:bg-gray-50 cursor-pointer" title="Text Color">
+            <span className="text-xs font-bold text-gray-500">A</span>
+            <input
+              type="color"
+              onChange={(e) => applyFormat('foreColor', e.target.value)}
+              className="w-6 h-6 rounded border-none p-0 cursor-pointer absolute opacity-0 left-0 top-0 h-full w-full"
+              defaultValue="#000000"
+            />
+            <div className="w-4 h-4 rounded-full border border-gray-200" style={{ background: 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)' }}></div>
+          </div>
+
           <div className="w-px h-6 bg-gray-300 mx-2" />
           <button onClick={() => applyFormat('insertUnorderedList')} className="p-2 hover:bg-gray-200 rounded">Bullet List</button>
           <button onClick={() => applyFormat('insertOrderedList')} className="p-2 hover:bg-gray-200 rounded">Num List</button>
           <div className="w-px h-6 bg-gray-300 mx-2" />
           <button onClick={insertCodeBlock} className="p-2 hover:bg-gray-200 rounded text-sm font-mono">&lt;Code&gt;</button>
           <button onClick={insertImage} className="p-2 hover:bg-gray-200 rounded">🖼️ Image</button>
-          <div className="w-px h-6 bg-gray-300 mx-2" />
-          {/* Folder/Tag Helpers could go here or in a settings modal */}
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-50 p-8">
@@ -280,6 +315,8 @@ export const RunbookEditor: React.FC = () => {
               contentEditable
               className="prose prose-lg max-w-none focus:outline-none min-h-[500px]"
               onInput={(e) => setContent(e.currentTarget.innerHTML)}
+              onMouseUp={saveRange}
+              onKeyUp={saveRange}
             />
           </div>
         </div>
@@ -287,10 +324,8 @@ export const RunbookEditor: React.FC = () => {
     );
   }
 
-  // View Mode (Modern layout)
   return (
     <div className="min-h-screen bg-white">
-      {/* Sticky Top Navigation */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -331,7 +366,6 @@ export const RunbookEditor: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-12 gap-12">
-          {/* Main Content */}
           <main className="col-span-12 lg:col-span-9">
             <div className="mb-10 pb-10 border-b border-gray-100">
               <div className="flex items-center space-x-3 mb-6">
@@ -366,7 +400,6 @@ export const RunbookEditor: React.FC = () => {
             />
           </main>
 
-          {/* Right Sidebar - TOC */}
           <aside className="hidden lg:block col-span-3">
             <div className="sticky top-24">
               <h5 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">On this page</h5>

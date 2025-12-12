@@ -5,6 +5,13 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seeding Example Runbooks...');
 
+    // 0. Clean up existing data to prevent duplicates
+    console.log('🧹 Cleaning up old data...');
+    await prisma.runbookTag.deleteMany({});
+    await prisma.runbook.deleteMany({});
+    await prisma.folder.deleteMany({});
+    await prisma.tag.deleteMany({});
+
     // 1. Create Folders
     const migrationFolder = await prisma.folder.create({
         data: {
@@ -65,7 +72,7 @@ async function main() {
 <h1>Migrate to OCI: Infrastructure as Code Guide</h1>
 <p>This runbook details the process of migrating a workload to Oracle Cloud Infrastructure (OCI). We will provision a Virtual Cloud Network (VCN), a Compute Instance (VM), and an Autonomous Database, connecting them securely.</p>
 
-<img src="https://docs.oracle.com/en-us/iaas/Content/Resources/Images/vcn-diagram.png" alt="OCI Architecture Diagram">
+<img src="/oci-architecture.png" alt="OCI Hub and Spoke Architecture Diagram">
 
 <h2>Prerequisites</h2>
 <ul>
