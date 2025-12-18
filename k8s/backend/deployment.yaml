@@ -11,7 +11,7 @@ spec:
   template:
     metadata:
       annotations:
-        rollout-timestamp: "2023-12-17T23:55:00Z"
+        rollout-timestamp: "2023-12-17T23:59:00Z"
       labels:
         app: backend
     spec:

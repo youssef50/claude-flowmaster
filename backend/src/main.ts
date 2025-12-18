@@ -34,6 +34,9 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
 
+  // Initialize the app (triggers onModuleInit, connecting Prisma)
+  await app.init();
+
   // Seed demo data if needed
   const projectsService = app.get(ProjectsService);
   const tenantsService = app.get(TenantsService);
@@ -61,7 +64,7 @@ async function bootstrap() {
       console.log('✅ Seeded demo project');
     }
   } catch (error) {
-    console.warn('⚠️ Seeding failed, but continuing bootstrap...', error.message);
+    console.warn('⚠️ Seeding failed:', error.message);
   }
 
   // Start server
