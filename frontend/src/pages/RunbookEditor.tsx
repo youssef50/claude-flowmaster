@@ -19,7 +19,7 @@ export const RunbookEditor: React.FC = () => {
   const [content, setContent] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+  const [, setActiveFormats] = useState<Set<string>>(new Set());
   const [toc, setToc] = useState<{ id: string; text: string; level: number }[]>([]);
 
   const { data: runbook } = useQuery({
@@ -32,7 +32,7 @@ export const RunbookEditor: React.FC = () => {
     enabled: !!id && id !== 'new',
   });
 
-  const { data: folders } = useQuery({
+  useQuery({
     queryKey: ['folders'],
     queryFn: async () => {
       const response = await foldersApi.getAll();
@@ -40,7 +40,7 @@ export const RunbookEditor: React.FC = () => {
     },
   });
 
-  const { data: tags } = useQuery({
+  useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
       const response = await tagsApi.getAll();

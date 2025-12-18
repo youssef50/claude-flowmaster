@@ -4,7 +4,7 @@ import { teamsApi, engineersApi } from '../services/api';
 import { useWorkflowStore } from '../stores/workflowStore';
 
 export const NodeConfigPanel: React.FC = () => {
-  const { selectedNode, updateNode, removeNode, setSelectedNode } = useWorkflowStore();
+  const { selectedNode, removeNode, setSelectedNode } = useWorkflowStore();
 
   const handleDeleteNode = () => {
     if (selectedNode && confirm('Are you sure you want to delete this node?')) {

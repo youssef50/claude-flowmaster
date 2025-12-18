@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { slackConfigApi } from '../services/api';
-import type { SlackConfig } from '../types';
 
 export const Settings: React.FC = () => {
   const queryClient = useQueryClient();

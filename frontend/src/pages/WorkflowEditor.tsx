@@ -10,7 +10,7 @@ import { workflowsApi } from '../services/api';
 export const WorkflowEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { nodes, edges, clearWorkflow, setNodes, setEdges } = useWorkflowStore();
+  const { nodes, edges, setNodes, setEdges } = useWorkflowStore();
   const [workflowName, setWorkflowName] = useState('');
 
   // Load workflow if editing
