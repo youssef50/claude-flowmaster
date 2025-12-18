@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { ProjectsService } from './modules/projects/projects.service';
+import { TenantsService } from './modules/tenants/tenants.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,15 +32,35 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
+
+  // Seed demo data if needed
   const projectsService = app.get(ProjectsService);
-  const existing = await projectsService.findAll();
-  if (existing.length === 0) {
-    await projectsService.create({
-      name: 'Demo Project',
-      description: 'A sample project for demo purposes',
-      tenantId: 'demo-tenant',
-    });
-    console.log('✅ Seeded demo project');
+  const tenantsService = app.get(TenantsService);
+
+  try {
+    const existingTenants = await tenantsService.findAll();
+    let demoTenant;
+
+    if (existingTenants.length === 0) {
+      demoTenant = await tenantsService.create({
+        name: 'Demo Workspace',
+      });
+      console.log('✅ Seeded demo tenant');
+    } else {
+      demoTenant = existingTenants[0];
+    }
+
+    const existingProjects = await projectsService.findAll();
+    if (existingProjects.length === 0) {
+      await projectsService.create({
+        name: 'Demo Project',
+        description: 'A sample project for demo purposes',
+        tenantId: demoTenant.id,
+      });
+      console.log('✅ Seeded demo project');
+    }
+  } catch (error) {
+    console.warn('⚠️ Seeding failed, but continuing bootstrap...', error.message);
   }
 
   // Start server
