@@ -10,6 +10,8 @@ spec:
       app: backend
   template:
     metadata:
+      annotations:
+        rollout-timestamp: "2023-12-17T23:55:00Z"
       labels:
         app: backend
     spec:
@@ -26,6 +28,7 @@ spec:
       containers:
       - name: backend
         image: youssef50/kirro-backend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         envFrom:

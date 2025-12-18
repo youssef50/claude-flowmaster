@@ -5,6 +5,7 @@ import { ProjectsService } from './modules/projects/projects.service';
 import { TenantsService } from './modules/tenants/tenants.service';
 
 async function bootstrap() {
+  console.log('🚀 Starting Backend Bootstrap...');
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS
